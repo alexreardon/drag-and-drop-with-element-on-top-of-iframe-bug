@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   draggable,
   dropTargetForElements,
@@ -7,6 +7,7 @@ import {
 import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import invariant from 'tiny-invariant';
+import { bindAll } from 'bind-event-listener';
 
 function InIframe() {
   return (
@@ -139,9 +140,18 @@ function Parent() {
     })
   }, []);
 
+  // useEffect(() => {
+  //   const isInIframe = window.self !== window.top;
+  //   function log(event: Event) {
+  //     console.log({isInIframe}, event.type, event.target);
+  //   }
+  //   const eventNames = ['dragstart', 'dragenter', 'dragleave', 'drop', 'dragend'] as const;
+  //   return bindAll(window, eventNames.map(eventName => ({ type: eventName, listener: log })));
+  // }, []);
+
   return (
     <>
-      <div className="relative flex flex-row gap-20">
+      <div className="relative flex flex-row gap-3 items-start">
         <iframe
           ref={iframeRef}
           src={isIframeOnSameOrigin ? window.location.href : 'https://atlassian.design'}
@@ -151,14 +161,16 @@ function Parent() {
         />
         <div
           onMouseEnter={() => setIsOver(true)} onMouseLeave={() => setIsOver(false)}
-          className={`bg-slate-200 p-2 rounded border-2 border-black flex flex-col gap-2 w-80 h-80 ${isOnTop ? 'absolute shadow-lg left-60 top-20' : ''
+          className={`bg-slate-200 p-2 rounded border-2 border-black flex flex-col gap-2 ${isOnTop ? 'absolute shadow-lg left-60 top-20' : ''
             }`}
         >
           <span>
-            <code>position:absolute</code> element on top
+            {isOnTop ? <><code>position:absolute</code> element on top</> : <>element beside iframe</>}
           </span>
           <Draggable />
-          <DropTarget />
+          <div className="flex flex-col h-32">
+            <DropTarget />
+          </div>
           <label className="flex flex-row gap-2">
             <input
               type="checkbox"
