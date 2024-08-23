@@ -121,10 +121,10 @@ function Draggable() {
 }
 
 function Parent() {
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [isIframeOnSameOrigin, setIsIframeOnSameOrigin] = useState<boolean>(true);
   const [applyFix, setApplyFix] = useState<boolean>(false);
   const [isOnTop, setIsOnTop] = useState<boolean>(true);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isOver, setIsOver] = useState<boolean>(false);
 
