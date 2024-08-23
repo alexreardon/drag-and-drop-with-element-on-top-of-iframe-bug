@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  draggable,
-  dropTargetForElements,
-  monitorForElements,
-} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
-import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import invariant from 'tiny-invariant';
+import { bindAll } from 'bind-event-listener';
 
 function InIframe() {
   return (
@@ -22,12 +16,11 @@ function InIframe() {
   );
 }
 
-type DropTargetState = 'idle' | 'over-internal' | 'over-external';
+type DropTargetState = 'idle' | 'over'
 
 const dropTargetStyles: { [Key in DropTargetState]: string } = {
   idle: 'bg-violet-200',
-  'over-internal': 'bg-violet-400',
-  'over-external': 'bg-violet-400',
+  'over': 'bg-violet-400',
 };
 
 function DropTarget() {
@@ -38,32 +31,29 @@ function DropTarget() {
     const element = ref.current;
 
     invariant(element);
-    return combine(
-      dropTargetForElements({
-        element,
-        onDragEnter() {
-          setState('over-internal');
-        },
-        onDragLeave() {
+
+    return bindAll(element, [{
+      type: 'dragenter',
+      listener(event) {
+        if (event.target === element) {
+          setState('over');
+        }
+      }
+    }, {
+      type: 'dragleave',
+      listener(event) {
+        if (event.relatedTarget instanceof Element && !element.contains(event.relatedTarget)) {
           setState('idle');
-        },
-        onDrop() {
-          setState('idle');
-        },
-      }),
-      dropTargetForExternal({
-        element,
-        onDragEnter() {
-          setState('over-external');
-        },
-        onDragLeave() {
-          setState('idle');
-        },
-        onDrop() {
-          setState('idle');
-        },
-      }),
-    );
+        }
+      }
+    },
+    {
+      type: 'drop',
+      listener(event) {
+        setState('idle');
+      }
+    }
+    ]);
   }, []);
   console.log({ isInIframe: window.self !== window.top, state });
 
@@ -97,21 +87,24 @@ function Draggable() {
 
     invariant(element);
 
-    return draggable({
-      element,
-      getInitialDataForExternal() {
-        return { 'text/plain': 'hello' };
+    element.draggable = true;
+
+    return bindAll(element, [
+      {
+        type: 'dragstart',
+        listener() {
+          setState('preview');
+          requestAnimationFrame(() => setState('dragging'));
+        }
       },
-      onGenerateDragPreview() {
-        setState('preview');
-      },
-      onDragStart() {
-        setState('dragging');
-      },
-      onDrop() {
-        setState('idle');
-      },
-    });
+      {
+        type: 'dragend',
+        listener() {
+          setState('idle');
+        }
+      }
+    ]);
+
   }, []);
   return (
     <div ref={ref} className={`p-2 rounded cursor-grab ${draggableStyles[state]}`}>
@@ -129,14 +122,18 @@ function Parent() {
   const [isOver, setIsOver] = useState<boolean>(false);
 
   useEffect(() => {
-    return monitorForElements({
-      onGenerateDragPreview() {
-        setIsDragging(true);
+    return bindAll(window, [
+      {
+        type: 'dragstart', listener() {
+          setIsDragging(true);
+        }
       },
-      onDrop() {
-        setIsDragging(false);
+      {
+        type: 'dragend', listener() {
+          setIsDragging(false);
+        }
       }
-    })
+    ])
   }, []);
 
   return (
