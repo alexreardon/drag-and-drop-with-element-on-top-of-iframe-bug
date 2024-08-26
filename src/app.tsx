@@ -10,11 +10,19 @@ import invariant from 'tiny-invariant';
 import { bindAll } from 'bind-event-listener';
 
 function InIframe() {
+  useEffect(() => {
+    function log(event: DragEvent) {
+      console.log(event.type, event.target);
+    }
+    const eventNames = ['dragstart', 'dragenter', 'dragleave', 'drop', 'dragend'] as const;
+    return bindAll(window, eventNames.map(eventName => ({ type: eventName, listener: log })));
+  }, []);
+
   return (
     <>
       <div className="bg-orange-200 p-2 border-2 border-black rounded flex flex-col gap-2 w-screen h-screen">
         <span>
-          In a child <code>iframe</code>
+          <code>iframe</code> on same <code>origin</code>
         </span>
         <Draggable />
         <DropTarget />
@@ -66,7 +74,6 @@ function DropTarget() {
       }),
     );
   }, []);
-  console.log({ isInIframe: window.self !== window.top, state });
 
   return (
     <div
@@ -140,18 +147,15 @@ function Parent() {
     })
   }, []);
 
-  // useEffect(() => {
-  //   const isInIframe = window.self !== window.top;
-  //   function log(event: Event) {
-  //     console.log({isInIframe}, event.type, event.target);
-  //   }
-  //   const eventNames = ['dragstart', 'dragenter', 'dragleave', 'drop', 'dragend'] as const;
-  //   return bindAll(window, eventNames.map(eventName => ({ type: eventName, listener: log })));
-  // }, []);
+  
 
   return (
     <>
+    <div className="flex flex-col p-2 border-2 gap-2 border-dashed rounded border-blue-700">
+      <h2 className="font-bold text-blue-700">Parent window</h2>
       <div className="relative flex flex-row gap-3 items-start">
+      <div className="flex flex-col p-2 border-2 gap-2 border-dashed rounded border-pink-700">
+      <h2 className="font-bold text-pink-700">iframe</h2>
         <iframe
           ref={iframeRef}
           src={isIframeOnSameOrigin ? window.location.href : 'https://atlassian.design'}
@@ -159,8 +163,11 @@ function Parent() {
           width={600}
           height={600}
         />
+        </div>
         <div
-          onMouseEnter={() => setIsOver(true)} onMouseLeave={() => setIsOver(false)}
+          onPointerDown={() => setIsOver(true)} 
+          onPointerCancel={() => setIsOver(false)}
+          onPointerUp={() => setIsOver(false)}
           className={`bg-slate-200 p-2 rounded border-2 border-black flex flex-col gap-2 ${isOnTop ? 'absolute shadow-lg left-60 top-20' : ''
             }`}
         >
@@ -188,6 +195,7 @@ function Parent() {
             Apply <code>pointer-events: none</code> fix?
           </label>
         </div>
+      </div>
       </div>
     </>
   );
