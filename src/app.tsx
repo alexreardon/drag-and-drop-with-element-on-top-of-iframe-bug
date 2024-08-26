@@ -1,11 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  draggable,
-  dropTargetForElements,
-  monitorForElements,
-} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
-import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import invariant from 'tiny-invariant';
 import { bindAll } from 'bind-event-listener';
 
@@ -31,12 +24,11 @@ function InIframe() {
   );
 }
 
-type DropTargetState = 'idle' | 'over-internal' | 'over-external';
+type DropTargetState = 'idle' | 'over';
 
 const dropTargetStyles: { [Key in DropTargetState]: string } = {
   idle: 'bg-violet-200',
-  'over-internal': 'bg-violet-400',
-  'over-external': 'bg-violet-400',
+  'over': 'bg-violet-400',
 };
 
 function DropTarget() {
@@ -47,32 +39,29 @@ function DropTarget() {
     const element = ref.current;
 
     invariant(element);
-    return combine(
-      dropTargetForElements({
-        element,
-        onDragEnter() {
-          setState('over-internal');
-        },
-        onDragLeave() {
+
+    return bindAll(element, [{
+      type: 'dragenter',
+      listener(event) {
+        if (event.target === element) {
+          setState('over');
+        }
+      }
+    }, {
+      type: 'dragleave',
+      listener(event) {
+        if (event.relatedTarget instanceof Element && !element.contains(event.relatedTarget)) {
           setState('idle');
-        },
-        onDrop() {
-          setState('idle');
-        },
-      }),
-      dropTargetForExternal({
-        element,
-        onDragEnter() {
-          setState('over-external');
-        },
-        onDragLeave() {
-          setState('idle');
-        },
-        onDrop() {
-          setState('idle');
-        },
-      }),
-    );
+        }
+      }
+    },
+    {
+      type: 'drop',
+      listener(event) {
+        setState('idle');
+      }
+    }
+    ]);
   }, []);
 
   return (
@@ -105,22 +94,25 @@ function Draggable() {
 
     invariant(element);
 
-    return draggable({
-      element,
-      getInitialDataForExternal() {
-        return { 'text/plain': 'hello' };
+    element.draggable = true;
+
+    return bindAll(element, [
+      {
+        type: 'dragstart',
+        listener() {
+          setState('preview');
+          requestAnimationFrame(() => setState('dragging'));
+        }
       },
-      onGenerateDragPreview() {
-        setState('preview');
-      },
-      onDragStart() {
-        setState('dragging');
-      },
-      onDrop() {
-        setState('idle');
-      },
-    });
+      {
+        type: 'dragend',
+        listener() {
+          setState('idle');
+        }
+      }
+    ]);
   }, []);
+
   return (
     <div ref={ref} className={`p-2 rounded cursor-grab ${draggableStyles[state]}`}>
       Draggable element
@@ -137,34 +129,36 @@ function Parent() {
   const [isOver, setIsOver] = useState<boolean>(false);
 
   useEffect(() => {
-    return monitorForElements({
-      onGenerateDragPreview() {
-        setIsDragging(true);
+    return bindAll(window, [
+      {
+        type: 'dragstart', listener() {
+          setIsDragging(true);
+        }
       },
-      onDrop() {
-        setIsDragging(false);
+      {
+        type: 'dragend', listener() {
+          setIsDragging(false);
+        }
       }
-    })
+    ])
   }, []);
-
-  
 
   return (
     <div className="flex flex-col p-2 border-2 gap-2 border-dashed rounded border-blue-700 w-fit">
       <h2 className="font-bold text-blue-700">Parent window</h2>
       <div className="relative flex flex-row gap-3 items-start">
-      <div className="flex flex-col p-2 border-2 gap-2 border-dashed rounded border-pink-700">
-      <h2 className="font-bold text-pink-700">iframe</h2>
-        <iframe
-          ref={iframeRef}
-          src={isIframeOnSameOrigin ? window.location.href : 'https://atlassian.design'}
-          className={(isOver || isDragging) && applyFix ? 'pointer-events-none grayscale' : ''}
-          width={600}
-          height={600}
-        />
+        <div className="flex flex-col p-2 border-2 gap-2 border-dashed rounded border-pink-700">
+          <h2 className="font-bold text-pink-700">iframe</h2>
+          <iframe
+            ref={iframeRef}
+            src={isIframeOnSameOrigin ? window.location.href : 'https://atlassian.design'}
+            className={(isOver || isDragging) && applyFix ? 'pointer-events-none grayscale' : ''}
+            width={600}
+            height={600}
+          />
         </div>
         <div
-          onPointerDown={() => setIsOver(true)} 
+          onPointerDown={() => setIsOver(true)}
           onPointerCancel={() => setIsOver(false)}
           onPointerUp={() => setIsOver(false)}
           className={`bg-blue-200 p-2 rounded border-2 border-blue-700 flex flex-col gap-2 ${isOnTop ? 'absolute shadow-lg left-60 top-20' : ''
@@ -195,7 +189,7 @@ function Parent() {
           </label>
         </div>
       </div>
-      </div>
+    </div>
   );
 }
 
