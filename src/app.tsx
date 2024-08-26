@@ -20,7 +20,7 @@ function InIframe() {
 
   return (
     <>
-      <div className="bg-orange-200 p-2 border-2 border-black rounded flex flex-col gap-2 w-screen h-screen">
+      <div className="bg-pink-200 p-2 border-2 border-pink-700 rounded flex flex-col gap-2 w-screen h-screen">
         <span>
           <code>iframe</code> on same <code>origin</code>
         </span>
@@ -151,7 +151,7 @@ function Parent() {
 
   return (
     <>
-    <div className="flex flex-col p-2 border-2 gap-2 border-dashed rounded border-blue-700">
+    <div className="flex flex-col p-2 border-2 gap-2 border-dashed rounded border-blue-700 w-fit">
       <h2 className="font-bold text-blue-700">Parent window</h2>
       <div className="relative flex flex-row gap-3 items-start">
       <div className="flex flex-col p-2 border-2 gap-2 border-dashed rounded border-pink-700">
@@ -168,11 +168,11 @@ function Parent() {
           onPointerDown={() => setIsOver(true)} 
           onPointerCancel={() => setIsOver(false)}
           onPointerUp={() => setIsOver(false)}
-          className={`bg-slate-200 p-2 rounded border-2 border-black flex flex-col gap-2 ${isOnTop ? 'absolute shadow-lg left-60 top-20' : ''
+          className={`bg-blue-200 p-2 rounded border-2 border-blue-700 flex flex-col gap-2 ${isOnTop ? 'absolute shadow-lg left-60 top-20' : ''
             }`}
         >
           <span>
-            {isOnTop ? <><code>position:absolute</code> element on top</> : <>element beside iframe</>}
+            In parent window
           </span>
           <Draggable />
           <div className="flex flex-col h-32">
@@ -184,7 +184,7 @@ function Parent() {
               checked={isIframeOnSameOrigin}
               onChange={() => setIsIframeOnSameOrigin(!isIframeOnSameOrigin)}
             />
-            Place <code>iframe</code> on same origin?
+            <code>iframe</code> on same origin?
           </label>
           <label className="flex flex-row gap-2">
             <input type="checkbox" checked={isOnTop} onChange={() => setIsOnTop(!isOnTop)} />
