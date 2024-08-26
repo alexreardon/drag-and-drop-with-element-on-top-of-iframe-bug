@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   draggable,
   dropTargetForElements,
@@ -150,7 +150,6 @@ function Parent() {
   
 
   return (
-    <>
     <div className="flex flex-col p-2 border-2 gap-2 border-dashed rounded border-blue-700 w-fit">
       <h2 className="font-bold text-blue-700">Parent window</h2>
       <div className="relative flex flex-row gap-3 items-start">
@@ -197,7 +196,6 @@ function Parent() {
         </div>
       </div>
       </div>
-    </>
   );
 }
 
